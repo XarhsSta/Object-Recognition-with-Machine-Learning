@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Object Recognition</string>
+    <string name="action_settings">Settings</string>
+
+    <!--String names used in MainActivity and activity_main.xml-->
+    <string name="selectButton">Select From Storage</string>
+    <string name="cameraButton">Take A Picture</string>
+
+    <!-- Strings used in ChosenImage and activity_chosen_image.xml-->
+    <string name="title_activity_chosen_image">Chosen Image</string>
+</resources>
