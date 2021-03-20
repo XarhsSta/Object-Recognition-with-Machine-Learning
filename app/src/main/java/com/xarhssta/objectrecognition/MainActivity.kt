@@ -80,7 +80,7 @@ class MainActivity : AppCompatActivity() {
             try {
                 val cameraImage = data.extras?.get("data") as Bitmap
                 val byteArrayOutputStream = ByteArrayOutputStream()
-                cameraImage?.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
+                cameraImage.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
                 val bitmapData = byteArrayOutputStream.toByteArray()
 
                 val intent = Intent(this, ChosenImage::class.java)
@@ -94,10 +94,6 @@ class MainActivity : AppCompatActivity() {
 
     fun openCamera(view: View) {
         Log.d(TAG, ".openCamera starts")
-        if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            Log.d(TAG, ".openCamera inside if for Write_External_Storage")
-            requestPermissions(arrayOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
-        } else {
             Log.d(TAG, ".openCamera inside else for Write_External_Storage")
             if (checkSelfPermission(android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                 Log.d(TAG, ".openCamera inside if for Camera")
@@ -106,7 +102,6 @@ class MainActivity : AppCompatActivity() {
                 Log.d(TAG, ".openCamera inside else for Camera")
                 dispatchTakePictureIntent()
             }
-        }
     }
 
     private fun dispatchTakePictureIntent() {
@@ -117,4 +112,5 @@ class MainActivity : AppCompatActivity() {
             Log.e(TAG,"Error Message: ${e.message}")
         }
     }
+
 }

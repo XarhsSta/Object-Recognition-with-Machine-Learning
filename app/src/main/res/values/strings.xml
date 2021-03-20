@@ -8,4 +8,9 @@
 
     <!-- Strings used in ChosenImage and activity_chosen_image.xml-->
     <string name="title_activity_chosen_image">Chosen Image</string>
+
+    <!-- Strings used in item_recognition.xml -->
+    <string name="itemName">Item Name</string>
+    <string name="itemProbability">0 %</string>
+
 </resources>
