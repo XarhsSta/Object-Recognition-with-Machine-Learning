@@ -16,7 +16,7 @@ import java.lang.Exception
 
 private const val TAG = "MainActivity"
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : BaseActivity() {
 
     private val requestImageFromStorage = 1
     private val requestPictureCode = 2
