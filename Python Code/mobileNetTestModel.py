@@ -9,6 +9,7 @@ from keras.utils import np_utils
 import time
 from sklearn.metrics import mean_absolute_error, mean_squared_error, coverage_error, \
     label_ranking_average_precision_score, label_ranking_loss
+from sklearn.metrics import precision_score,accuracy_score, recall_score, f1_score
 
 num_classes = 100
 nb_epochs = 10
@@ -43,12 +44,42 @@ coverageError = coverage_error(y_test, y_test_predictions)
 labelRankingAverage = label_ranking_average_precision_score(y_test, y_test_predictions)
 labelRankingLoss = label_ranking_loss(y_test, y_test_predictions)
 
+y_test_predictions = np.argmax(y_test_predictions, axis=1)
+y_test = np.argmax(y_test, axis=1)
+
+precision = precision_score(y_test, y_test_predictions, average='macro')
+accuracy = accuracy_score(y_test, y_test_predictions)
+recall = recall_score(y_test, y_test_predictions, average='macro')
+f1 = f1_score(y_test, y_test_predictions, average='macro')
+
 print("Mean Absolute Error: ", meanAbsoluteError)
 print("Mean Squared Error: ", meanSquaredError)
 print("Coverage Error: ", coverageError)
 print("Label Ranking Average Precision Score: ", labelRankingAverage)
 print("Label Ranking Loss: ", labelRankingLoss)
+print("Precision: ", precision)
+print("Accuracy: ", accuracy)
+print("Recall: ", recall)
+print("F1: ", f1)
 
+#Save to .txt
+file = open("mobileNetScores.txt", "a")
+file.write("===========================================\n")
+file.write("New Test\n")
+file.write("===========================================\n")
+file.write("Multilabel Ranking Tests\n\n")
+file.write("Mean Absolute Error: %2.5f\n" % meanAbsoluteError)
+file.write("Mean Squared Error: %2.5f\n" % meanSquaredError)
+file.write("Coverage Error: %2.5f\n" % coverageError)
+file.write("Label Ranking Average Precision Score: %2.5f\n" % labelRankingAverage)
+file.write("Label Ranking Loss: %2.5f\n\n" % labelRankingLoss)
+file.write("Classification Metrics\n\n")
+file.write("Precision: %2.5f\n" % precision)
+file.write("Accuracy: %2.5f\n" % accuracy)
+file.write("Recall: %2.5f\n" % recall)
+file.write("F1: %2.5f\n\n" % f1)
+
+file.close()
 # Convert the model
 converter = tf.lite.TFLiteConverter.from_saved_model(saved_model_dir) # path to the SavedModel directory
 tflite_model = converter.convert()
