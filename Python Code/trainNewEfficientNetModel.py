@@ -5,7 +5,7 @@ import tensorflow.keras as keras
 from tensorflow.keras.applications.efficientnet import EfficientNetB0, preprocess_input
 from tensorflow.keras.models import Model, Sequential, save_model
 from tensorflow.keras.layers import Input, UpSampling2D, Flatten, BatchNormalization, Dense, Dropout, \
-    GlobalAveragePooling2D, Conv2D
+    GlobalAveragePooling2D
 from tensorflow.keras import optimizers
 from tensorflow.keras.datasets import cifar100
 from keras.utils import np_utils
@@ -13,7 +13,7 @@ from tensorflow.keras.callbacks import ModelCheckpoint
 from os.path import dirname
 
 num_classes = 100
-nb_epochs = 10
+nb_epochs = 15
 batch_size = 32
 
 config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.6))
@@ -64,7 +64,7 @@ model.save_weights(checkpoint_path.format(epoch=0))
 t = time.time()
 historytemp = model.fit(x_train, y_train, batch_size,
                         steps_per_epoch=x_train.shape[0] // 64,
-                        epochs=15,
+                        epochs=nb_epochs,
                         validation_data=(x_test, y_test),
                         callbacks=[cp_callback])
 
