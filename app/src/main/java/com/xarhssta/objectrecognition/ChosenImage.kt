@@ -10,9 +10,12 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.mlkit.common.model.CustomRemoteModel
+import com.google.mlkit.common.model.LocalModel
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.label.ImageLabel
 import com.google.mlkit.vision.label.ImageLabeling
+import com.google.mlkit.vision.label.custom.CustomImageLabelerOptions
 import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
 import com.google.mlkit.vision.objects.DetectedObject
 import com.google.mlkit.vision.objects.ObjectDetection
@@ -28,7 +31,8 @@ private const val TAG = "ChosenImage"
 class ChosenImage : BaseActivity() {
 
     private var chosenImageView: ImageView? = null
-    private val itemRecognitionAdapter = ItemRecognitionAdapter(ArrayList())
+    private val itemRecognitions: ArrayList<ItemRecognition> = ArrayList()
+    private val itemRecognitionAdapter = ItemRecognitionAdapter(itemRecognitions, this)
     private val colorTable: List<Int> = listOf(Color.GREEN, Color.RED, Color.BLUE, Color.BLACK, Color.YELLOW, Color.CYAN, Color.DKGRAY, Color.LTGRAY)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,19 +40,18 @@ class ChosenImage : BaseActivity() {
         setContentView(R.layout.activity_chosen_image)
         activateToolbar(true)
         Log.d(TAG, ".onCreate starts")
-
-        val itemList: RecyclerView = findViewById(R.id.itemList)
-        itemList.layoutManager = LinearLayoutManager(this)
-        itemList.adapter = itemRecognitionAdapter
-        val itemNameTextView: TextView = findViewById(R.id.itemNameTextView)
-        val itemScoreTextView: TextView = findViewById(R.id.itemScoreTextView)
         chosenImageView = findViewById(R.id.chosenImageView)
         val data = intent.getByteArrayExtra("photo")
         val imageBitmap = BitmapFactory.decodeByteArray(data, 0, data!!.size)
         val convertedBitmap = convert(imageBitmap, Bitmap.Config.ARGB_8888)
+        chosenImageView?.setImageBitmap(convertedBitmap)
+        locateObjects(convertedBitmap!!)
 
-        val croppedBitmap = locateObjects(convertedBitmap!!)
-//        chosenImageView?.setImageBitmap(croppedBitmap)
+        val itemList: RecyclerView = findViewById(R.id.itemList)
+        itemList.layoutManager = LinearLayoutManager(this)
+        itemList.adapter = itemRecognitionAdapter
+
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -73,24 +76,8 @@ class ChosenImage : BaseActivity() {
         return convertedBitmap
     }
 
-    private fun resultConvert(result: List<Detection>): ArrayList<ItemRecognition> {
-        val recognitions: ArrayList<ItemRecognition> = ArrayList()
-        var cnt = 0
-        for (detection in result) {
-            recognitions.add(
-                ItemRecognition(
-                    "" + cnt++,
-                    detection.categories[0].label,
-                    detection.categories[0].score,
-                    detection.boundingBox
-                )
-            )
-            Log.d(TAG,recognitions[cnt-1].toString())
-        }
-        return recognitions
-    }
 
-    private fun locateObjects(bitmap: Bitmap): Bitmap {
+    private fun locateObjects(bitmap: Bitmap) {
         // Finding the object
         val objectDetectorOptions = ObjectDetectorOptions.Builder()
                 .setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE)
@@ -105,35 +92,35 @@ class ChosenImage : BaseActivity() {
         objectDetector.process(inputImage)
                 .addOnFailureListener { e -> Log.e(TAG, "FAILED! ${e.message}") }
                 .addOnSuccessListener { results ->
-                    for ((count,detectedObject) in results.withIndex()) {
+                    for ((count, detectedObject) in results.withIndex()) {
                         val boundingBox = detectedObject.boundingBox
                         val trackingId = detectedObject.trackingId
-
                         croppedBitmap = cropObject(bitmap, boundingBox)
-                        val imageLabelerOptions = ImageLabelerOptions.Builder()
-                                .setConfidenceThreshold(0.5f)
+                        val localModel = LocalModel.Builder()
+                                .setAssetFilePath("efficientnet_lite0_fp32_2.tflite")
                                 .build()
-                        val labeler = ImageLabeling.getClient(imageLabelerOptions)
+                        val customImageLabelerOptions = CustomImageLabelerOptions.Builder(localModel)
+                                .setMaxResultCount(10)
+                                .setConfidenceThreshold(0.1f)
+                                .build()
+                        val labeler = ImageLabeling.getClient(customImageLabelerOptions)
                         labeler.process(InputImage.fromBitmap(croppedBitmap, 0))
                                 .addOnFailureListener{e-> Log.e(TAG, "FAILED! ${e.message}")}
                                 .addOnSuccessListener { labels ->
+                                    Log.d(TAG, "Success")
                                     for (label in labels) {
-                                        val text = label.text
-                                        val index = label.index
-                                        val confidence = label.confidence
+                                        itemRecognitions.add(ItemRecognition(trackingId,
+                                                label.text,
+                                                label.confidence,
+                                                boundingBox,
+                                                colorTable[count]
+                                        ))
                                     }
                                     paintAround(bitmap, detectedObject, labels[0], count)
+                                    itemRecognitionAdapter.notifyDataSetChanged()
                                 }
                     }
                 }
-
-        return if ((croppedBitmap.width == bitmap.width) && (croppedBitmap.height == bitmap.height)) {
-            Log.d(TAG,"Entered if")
-            bitmap
-        } else {
-            Log.d(TAG,"Entered else")
-            croppedBitmap
-        }
     }
 
     private fun cropObject(bitmap: Bitmap,rect: Rect) :Bitmap {

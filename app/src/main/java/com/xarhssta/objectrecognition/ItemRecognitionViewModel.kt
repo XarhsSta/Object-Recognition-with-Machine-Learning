@@ -1,5 +1,7 @@
 package com.xarhssta.objectrecognition
 
+import android.graphics.Color
+import android.graphics.Rect
 import android.graphics.RectF
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -15,11 +17,11 @@ class ItemRecognitionViewModel: ViewModel() {
     }
 }
 
-data class ItemRecognition(val id:String, val label:String, val probability: Float, val location: RectF) {
+data class ItemRecognition(val id:Int?, val label:String, val probability: Float, val location: Rect, val color: Int) {
 
     private val probabilityString = String.format("%.1f", probability * 100.0f)
 
     override fun toString(): String {
-        return "$id |$label | $probabilityString |$location"
+        return "$id |$label | $probabilityString |$location |$color"
     }
 }

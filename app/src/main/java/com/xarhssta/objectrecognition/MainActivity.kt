@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.ImageDecoder
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
@@ -74,7 +75,7 @@ class MainActivity : BaseActivity() {
                 intent.putExtra("photo", bitmapData)
                 startActivity(intent)
             } catch (e : Exception) {
-                e.printStackTrace()
+                Log.e(TAG, e.message!!)
             }
         } else if (requestCode == requestPictureCode && resultCode == Activity.RESULT_OK && data != null) {
             try {
