@@ -1,8 +1,8 @@
 <resources>
     <string name="app_name">Object Recognition</string>
-    <string name="action_settings">Settings</string>
 
     <!--String names used in MainActivity and activity_main.xml-->
+    <string name="title">Object Recognition using Machine Learning</string>
     <string name="selectButton">Select From Storage</string>
     <string name="cameraButton">Take A Picture</string>
 
@@ -13,4 +13,11 @@
     <string name="itemName">Item Name</string>
     <string name="itemProbability">0 %</string>
 
+    <!-- String used in menu_main.xml -->
+    <string name="action_about">About</string>
+
+    <!-- Strings used in activity_about.xml -->
+    <string name="app_creator">App created by: Stasinos Charalampos - Nektarios</string>
+    <string name="app_description">Android App using Kotlin and Google ML Kit for Object Recognition
+        with a custom .tflite model trained on CIFAR-100 dataset</string>
 </resources>

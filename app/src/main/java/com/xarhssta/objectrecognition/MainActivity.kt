@@ -4,16 +4,22 @@ import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
-import androidx.appcompat.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import java.io.ByteArrayOutputStream
+import androidx.core.content.FileProvider
+import java.io.*
 import java.lang.Exception
+import java.text.SimpleDateFormat
+import java.util.*
 
 private const val TAG = "MainActivity"
 
@@ -21,6 +27,8 @@ class MainActivity : BaseActivity() {
 
     private val requestImageFromStorage = 1
     private val requestPictureCode = 2
+    lateinit var currentPhotoPath: String
+    private var photoFile: File? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,7 +44,10 @@ class MainActivity : BaseActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-            R.id.action_settings -> true
+            R.id.action_about -> {
+                showAboutDialog()
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -59,58 +70,85 @@ class MainActivity : BaseActivity() {
         startActivityForResult(intent, 1)
     }
 
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         Log.d(TAG,".onActivityResult starts")
-        val selectedImage = data!!.data
-
-        if (requestCode == requestImageFromStorage && resultCode == Activity.RESULT_OK && data != null) {
-            try {
-                val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, selectedImage)
-                val byteArrayOutputStream = ByteArrayOutputStream()
-                bitmap?.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
-                val bitmapData = byteArrayOutputStream.toByteArray()
-
-                val intent = Intent(this, ChosenImage::class.java)
-                intent.putExtra("photo", bitmapData)
-                startActivity(intent)
-            } catch (e : Exception) {
-                Log.e(TAG, e.message!!)
+        if (data != null) {
+            var image: Bitmap? = null
+            if (requestCode == requestImageFromStorage && resultCode == Activity.RESULT_OK) {
+                val selectedImage = data.data
+                try {
+                    image = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        val source = ImageDecoder.createSource(this.contentResolver, selectedImage!!)
+                        ImageDecoder.decodeBitmap(source)
+                    } else {
+                        MediaStore.Images.Media.getBitmap(this.contentResolver, selectedImage)
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, e.message!!)
+                }
+            } else if (requestCode == requestPictureCode && resultCode == Activity.RESULT_OK) {
+                image = BitmapFactory.decodeFile(photoFile!!.absolutePath)
             }
-        } else if (requestCode == requestPictureCode && resultCode == Activity.RESULT_OK && data != null) {
-            try {
-                val cameraImage = data.extras?.get("data") as Bitmap
-                val byteArrayOutputStream = ByteArrayOutputStream()
-                cameraImage.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
-                val bitmapData = byteArrayOutputStream.toByteArray()
+                    val byteArrayOutputStream = ByteArrayOutputStream()
+                    image?.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
+                    val bitmapData = byteArrayOutputStream.toByteArray()
 
-                val intent = Intent(this, ChosenImage::class.java)
-                intent.putExtra("photo", bitmapData)
-                startActivity(intent)
-            } catch (e : Exception) {
-                e.printStackTrace()
+                    val intent = Intent(this, ChosenImage::class.java)
+                    intent.putExtra("photo", bitmapData)
+                    startActivity(intent)
             }
         }
-    }
+
 
     fun openCamera(view: View) {
-        Log.d(TAG, ".openCamera starts")
-            Log.d(TAG, ".openCamera inside else for Write_External_Storage")
             if (checkSelfPermission(android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                Log.d(TAG, ".openCamera inside if for Camera")
                 requestPermissions(arrayOf(android.Manifest.permission.CAMERA), 1)
             } else {
-                Log.d(TAG, ".openCamera inside else for Camera")
                 dispatchTakePictureIntent()
             }
     }
 
     private fun dispatchTakePictureIntent() {
-        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        try {
-            startActivityForResult(takePictureIntent, requestPictureCode)
-        } catch (e: Exception) {
-            Log.e(TAG,"Error Message: ${e.message}")
+        Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent->
+            takePictureIntent.resolveActivity(packageManager)?.also {
+                photoFile = try {
+                    createImageFile()
+            } catch (e: IOException) {
+                null
+            }
+                photoFile?.also {
+                    val photoURI = FileProvider.getUriForFile(
+                            this,
+                            "com.example.android.fileprovider",
+                            it
+                    )
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+                    startActivityForResult(takePictureIntent, requestPictureCode)
+                }
+            }
+        }
+    }
+
+    private fun createImageFile():File {
+
+        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+        val storageDir: File? = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        return File.createTempFile(
+                "JPEG_${timeStamp}_",
+                ".jpg",
+                storageDir)
+                .apply {
+                    currentPhotoPath = absolutePath
+                }
+    }
+
+    private fun galleryAddPic() {
+        Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE).also { mediaScanIntent ->
+            val f = File(currentPhotoPath)
+            mediaScanIntent.data = Uri.fromFile(f)
+            sendBroadcast(mediaScanIntent)
         }
     }
 

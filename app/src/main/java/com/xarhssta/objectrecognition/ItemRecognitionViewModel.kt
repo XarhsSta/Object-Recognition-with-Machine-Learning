@@ -1,20 +1,41 @@
 package com.xarhssta.objectrecognition
 
-import android.graphics.Color
-import android.graphics.Rect
-import android.graphics.RectF
+import android.graphics.*
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import java.util.*
 
-class ItemRecognitionViewModel: ViewModel() {
+private const val TAG = "ItemRecognitionViewModel."
+val EMPTY_ITEM_LIST:List<ItemRecognition> = Collections.emptyList()
+
+class ItemRecognitionViewModel: ViewModel(), ObjectDetection.ObjectCallback {
 
     private val recognitionListMutable = MutableLiveData<List<ItemRecognition>>()
-    val recognitionList : LiveData<List<ItemRecognition>> = recognitionListMutable
+    private val recognizedBitmapMutable = MutableLiveData<Bitmap>()
 
-    fun updateData(recognitions: List<ItemRecognition>) {
-        recognitionListMutable.postValue(recognitions)
+    val recognitionList : LiveData<List<ItemRecognition>>
+        get() = recognitionListMutable
+    val recognizedBitmap : LiveData<Bitmap>
+        get() = recognizedBitmapMutable
+
+    init {
+        recognitionListMutable.postValue(EMPTY_ITEM_LIST)
     }
+
+    override fun onObjectRecognized(itemList: List<ItemRecognition>, bitmap: Bitmap) {
+        Log.d(TAG,"objectRecognized")
+        recognitionListMutable.value = itemList
+        recognizedBitmapMutable.value = bitmap
+    }
+
+    fun recognizeObjects(bitmap: Bitmap) {
+        Log.d(TAG,".recognizeObjects starts")
+        var objectDetection = ObjectDetection(this)
+        objectDetection.locateObjects(bitmap)
+    }
+
 }
 
 data class ItemRecognition(val id:Int?, val label:String, val probability: Float, val location: Rect, val color: Int) {

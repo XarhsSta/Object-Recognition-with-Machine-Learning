@@ -5,6 +5,7 @@
     android:id="@+id/coordinatorLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/primary_light"
     tools:context=".ChosenImage">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -40,6 +41,7 @@
         android:id="@+id/itemList"
         android:layout_width="0dp"
         android:layout_height="200dp"
+        android:background="@color/white"
         android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

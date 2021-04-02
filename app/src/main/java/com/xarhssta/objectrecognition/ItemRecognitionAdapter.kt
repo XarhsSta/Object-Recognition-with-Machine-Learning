@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.RecyclerView
 
 private const val TAG = "ItemRecognitionAdapter"
 
-class ItemRecognitionAdapter (private var itemList: ArrayList<ItemRecognition>, private val context: Context):
+class ItemRecognitionAdapter (private var itemList: List<ItemRecognition>, private val context: Context):
    RecyclerView.Adapter<ItemRecognitionViewHolder>()
     {
 
@@ -43,6 +43,11 @@ class ItemRecognitionAdapter (private var itemList: ArrayList<ItemRecognition>, 
             } else {
                 holder.itemView.visibility = View.INVISIBLE
             }
+        }
+
+        fun setRecognitionList(recognitionList:List<ItemRecognition>) {
+            this.itemList = recognitionList
+            notifyDataSetChanged()
         }
     }
 
