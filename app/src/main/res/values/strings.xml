@@ -5,7 +5,10 @@
     <string name="title">Object Recognition using Machine Learning</string>
     <string name="selectButton">Select From Storage</string>
     <string name="cameraButton">Take A Picture</string>
-
+    <string name="radioButtonText">Please choose a model</string>
+    <string name="radioButton1">Common Objects Dataset</string>
+    <string name="radioButton2">Electronics Dataset</string>
+    <string name="radioButton3">Flower Dataset</string>
     <!-- Strings used in ChosenImage and activity_chosen_image.xml-->
     <string name="title_activity_chosen_image">Chosen Image</string>
 

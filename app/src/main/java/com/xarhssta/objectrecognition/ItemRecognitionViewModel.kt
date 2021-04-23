@@ -30,10 +30,10 @@ class ItemRecognitionViewModel: ViewModel(), ObjectDetection.ObjectCallback {
         recognizedBitmapMutable.value = bitmap
     }
 
-    fun recognizeObjects(bitmap: Bitmap) {
+    fun recognizeObjects(bitmap: Bitmap, modelChosen: Int) {
         Log.d(TAG,".recognizeObjects starts")
         var objectDetection = ObjectDetection(this)
-        objectDetection.locateObjects(bitmap)
+        objectDetection.locateObjects(bitmap, modelChosen)
     }
 
 }

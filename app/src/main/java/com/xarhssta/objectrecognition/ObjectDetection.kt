@@ -25,7 +25,16 @@ class ObjectDetection(private val callback: ObjectCallback) {
     }
 
 
-    fun locateObjects(bitmap: Bitmap) {
+    fun locateObjects(bitmap: Bitmap, modelChosen: Int) {
+
+        // Setting the model
+        val filePath = when (modelChosen) {
+            1 -> "object dataset"
+            2 -> "electronics dataset"
+            3 -> "flower dataset"
+            else -> ""
+        }
+        
         // Finding the object
         val objectDetectorOptions = ObjectDetectorOptions.Builder()
             .setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE)
@@ -48,7 +57,7 @@ class ObjectDetection(private val callback: ObjectCallback) {
                     croppedBitmap = cropObject(bitmap, boundingBox)
 
                     val localModel = LocalModel.Builder()
-                        .setAssetFilePath("model.tflite")
+                        .setAssetFilePath("$filePath/model.tflite")
                         .build()
 
                     val customImageLabelerOptions = CustomImageLabelerOptions.Builder(localModel)

@@ -1,10 +1,7 @@
 package com.xarhssta.objectrecognition
 
-import android.content.ClipData
 import android.graphics.*
 import android.os.Bundle
-import android.os.PersistableBundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.ImageView
@@ -12,17 +9,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.mlkit.common.model.LocalModel
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.label.ImageLabel
-import com.google.mlkit.vision.label.ImageLabeling
-import com.google.mlkit.vision.label.custom.CustomImageLabelerOptions
-import com.google.mlkit.vision.objects.DetectedObject
-import com.google.mlkit.vision.objects.ObjectDetection
-import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
-import java.util.*
-import kotlin.collections.ArrayList
-
 
 private const val TAG = "ChosenImage"
 private const val STATE_RECOGNIZE = "Image"
@@ -50,6 +36,8 @@ class ChosenImage : BaseActivity() {
             savedInstanceState.getByteArray(STATE_RECOGNIZE)!!
         }
 
+        val modelChosen = intent.getIntExtra("model", 0)
+
         val imageBitmap = BitmapFactory.decodeByteArray(data, 0, data!!.size)
         val convertedBitmap = convert(imageBitmap)
 
@@ -67,7 +55,7 @@ class ChosenImage : BaseActivity() {
             chosenImageView?.setImageBitmap(it)
         })
         if(savedInstanceState == null) {
-            viewModel.recognizeObjects(convertedBitmap)
+            viewModel.recognizeObjects(convertedBitmap, modelChosen)
         }
     }
 
