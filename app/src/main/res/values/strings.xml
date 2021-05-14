@@ -22,5 +22,5 @@
     <!-- Strings used in activity_about.xml -->
     <string name="app_creator">App created by: Stasinos Charalampos - Nektarios</string>
     <string name="app_description">Android App using Kotlin and Google ML Kit for Object Recognition
-        with a custom .tflite model trained on CIFAR-100 dataset</string>
+        with custom .tflite models trained on CIFAR-100 dataset, an electronics dataset, and a flower dataset</string>
 </resources>

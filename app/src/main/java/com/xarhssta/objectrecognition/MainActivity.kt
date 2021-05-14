@@ -15,14 +15,11 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.AdapterView
-import android.widget.RadioButton
 import androidx.core.content.FileProvider
 import java.io.*
 import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.properties.Delegates
 
 private const val TAG = "MainActivity"
 
@@ -30,9 +27,10 @@ class MainActivity : BaseActivity() {
 
     private val requestImageFromStorage = 1
     private val requestPictureCode = 2
-    lateinit var currentPhotoPath: String
+    private lateinit var currentPhotoPath: String
     private var photoFile: File? = null
     private lateinit var mySharedPreferences: SharedPreferences
+    private lateinit var mySharedPreferencesEditor: SharedPreferences.Editor
     private var radioButtonSelected: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,6 +39,7 @@ class MainActivity : BaseActivity() {
         setSupportActionBar(findViewById(R.id.toolbar))
         Log.d(TAG,".onCreate starts")
         mySharedPreferences = getSharedPreferences("radioChecked", MODE_PRIVATE)
+        mySharedPreferencesEditor = mySharedPreferences.edit()
         radioButtonSelected = mySharedPreferences.getInt("number",1)
         Log.d(TAG, "$radioButtonSelected")
     }
@@ -79,13 +78,13 @@ class MainActivity : BaseActivity() {
     }
 
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
+    override fun onActivityResult(requestCode: Int, resultCode: Int, dataIntent: Intent?) {
+        super.onActivityResult(requestCode, resultCode, dataIntent)
         Log.d(TAG,".onActivityResult starts")
-        if (data != null) {
+        if (dataIntent != null) {
             var image: Bitmap? = null
             if (requestCode == requestImageFromStorage && resultCode == Activity.RESULT_OK) {
-                val selectedImage = data.data
+                val selectedImage = dataIntent.data
                 try {
                     image = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                         val source = ImageDecoder.createSource(this.contentResolver, selectedImage!!)
@@ -100,12 +99,13 @@ class MainActivity : BaseActivity() {
                 image = BitmapFactory.decodeFile(photoFile!!.absolutePath)
             }
                     val byteArrayOutputStream = ByteArrayOutputStream()
-                    image?.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
+                    image?.compress(Bitmap.CompressFormat.JPEG, 25, byteArrayOutputStream)
                     val bitmapData = byteArrayOutputStream.toByteArray()
 
                     val intent = Intent(this, ChosenImage::class.java)
                     intent.putExtra("photo", bitmapData)
                     intent.putExtra("model", radioButtonSelected)
+                    mySharedPreferencesEditor.remove("number").apply()
                     startActivity(intent)
             }
         }
@@ -160,7 +160,6 @@ class MainActivity : BaseActivity() {
             "flower" -> 3
             else -> 0
         }
-        val mySharedPreferencesEditor = mySharedPreferences.edit()
         mySharedPreferencesEditor.putInt("number", radioButtonSelected)
                 .apply()
     }

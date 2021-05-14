@@ -7,7 +7,6 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.label.ImageLabel
 import com.google.mlkit.vision.label.ImageLabeling
 import com.google.mlkit.vision.label.custom.CustomImageLabelerOptions
-import com.google.mlkit.vision.objects.DetectedObject
 import com.google.mlkit.vision.objects.ObjectDetection
 import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 import java.util.*
@@ -18,12 +17,10 @@ class ObjectDetection(private val callback: ObjectCallback) {
 
     private val colorTable: List<Int> = listOf(Color.GREEN, Color.RED, Color.BLUE, Color.BLACK, Color.YELLOW, Color.CYAN, Color.DKGRAY, Color.LTGRAY)
     private val itemRecognition: MutableList<ItemRecognition> = mutableListOf()
-//    private var recognizedBitmap: Bitmap? = null
 
     interface ObjectCallback{
         fun onObjectRecognized(itemList: List<ItemRecognition>, bitmap: Bitmap)
     }
-
 
     fun locateObjects(bitmap: Bitmap, modelChosen: Int) {
 
@@ -49,8 +46,11 @@ class ObjectDetection(private val callback: ObjectCallback) {
         var croppedBitmap: Bitmap
 
         objectDetector.process(inputImage)
-            .addOnFailureListener { e -> Log.e(TAG, "FAILED! ${e.message}") }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Failed to find object ${e.message}")
+            }
             .addOnSuccessListener { results ->
+                Log.d(TAG,"Object Detected")
                 for ((count, detectedObject) in results.withIndex()) {
                     val boundingBox = detectedObject.boundingBox
                     val trackingId = detectedObject.trackingId
@@ -80,13 +80,14 @@ class ObjectDetection(private val callback: ObjectCallback) {
                                         )
                                     )
                                 }
-                               recognizedBitmap = paintAround(recognizedBitmap, detectedObject, labels[0], count)
+                               recognizedBitmap = paintAround(recognizedBitmap, boundingBox, labels[0], count)
                             }
                             callback.onObjectRecognized(itemRecognition, recognizedBitmap)
                         }
                 }
             }
     }
+
 
     private fun cropObject(bitmap: Bitmap, rect: Rect) : Bitmap {
         return try {
@@ -102,7 +103,7 @@ class ObjectDetection(private val callback: ObjectCallback) {
         }
     }
 
-    private fun paintAround(bitmap: Bitmap, detectedObject: DetectedObject, label: ImageLabel, count: Int): Bitmap {
+    private fun paintAround(bitmap: Bitmap, boundingBox: Rect, label: ImageLabel, count: Int): Bitmap {
         val canvas: Canvas = Canvas(bitmap)
         val paint: Paint = Paint()
         paint.style = Paint.Style.STROKE
@@ -112,7 +113,7 @@ class ObjectDetection(private val callback: ObjectCallback) {
         paint.strokeJoin = Paint.Join.ROUND
         paint.strokeMiter = 100f
         paint.isAntiAlias = true
-        canvas.drawRect(detectedObject.boundingBox, paint)
+        canvas.drawRect(boundingBox, paint)
 
         // Drawing the rectangle for the object name
         val textPaint = Paint()
@@ -126,10 +127,10 @@ class ObjectDetection(private val callback: ObjectCallback) {
         val textToShow = label.text.capitalize(Locale.ROOT) + " " + String.format("%.1f", label.confidence * 100.0f) + " %"
         val textWidth = textPaint.measureText(textToShow)
 
-        val rectLeft = detectedObject.boundingBox.left.toFloat()
-        val rectTop = detectedObject.boundingBox.top - 50.toFloat()
-        val rectRight = detectedObject.boundingBox.left + textWidth
-        val rectBottom = detectedObject.boundingBox.top.toFloat()
+        val rectLeft = boundingBox.left.toFloat()
+        val rectTop = boundingBox.top - 50.toFloat()
+        val rectRight = boundingBox.left + textWidth
+        val rectBottom = boundingBox.top.toFloat()
 
         canvas.drawRect(rectLeft, rectTop, rectRight, rectBottom, boxPaint)
         canvas.drawText(textToShow, rectLeft, rectBottom, textPaint)
