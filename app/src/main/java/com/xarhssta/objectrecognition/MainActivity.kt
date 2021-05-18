@@ -1,12 +1,14 @@
 package com.xarhssta.objectrecognition
 
 import android.app.Activity
+import android.content.ContentValues
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -27,8 +29,7 @@ class MainActivity : BaseActivity() {
 
     private val requestImageFromStorage = 1
     private val requestPictureCode = 2
-    private lateinit var currentPhotoPath: String
-    private var photoFile: File? = null
+    private var imageUri: Uri? = Uri.EMPTY
     private lateinit var mySharedPreferences: SharedPreferences
     private lateinit var mySharedPreferencesEditor: SharedPreferences.Editor
     private var radioButtonSelected: Int = 0
@@ -81,10 +82,12 @@ class MainActivity : BaseActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, dataIntent: Intent?) {
         super.onActivityResult(requestCode, resultCode, dataIntent)
         Log.d(TAG,".onActivityResult starts")
-        if (dataIntent != null) {
+        Log.d(TAG, requestCode.toString())
+        Log.d(TAG, resultCode.toString())
+        Log.d(TAG, dataIntent.toString())
             var image: Bitmap? = null
             if (requestCode == requestImageFromStorage && resultCode == Activity.RESULT_OK) {
-                val selectedImage = dataIntent.data
+                val selectedImage = dataIntent?.data
                 try {
                     image = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                         val source = ImageDecoder.createSource(this.contentResolver, selectedImage!!)
@@ -96,7 +99,7 @@ class MainActivity : BaseActivity() {
                     Log.e(TAG, e.message!!)
                 }
             } else if (requestCode == requestPictureCode && resultCode == Activity.RESULT_OK) {
-                image = BitmapFactory.decodeFile(photoFile!!.absolutePath)
+                image = MediaStore.Images.Media.getBitmap(contentResolver, imageUri)
             }
                     val byteArrayOutputStream = ByteArrayOutputStream()
                     image?.compress(Bitmap.CompressFormat.JPEG, 25, byteArrayOutputStream)
@@ -107,50 +110,33 @@ class MainActivity : BaseActivity() {
                     intent.putExtra("model", radioButtonSelected)
                     mySharedPreferencesEditor.remove("number").apply()
                     startActivity(intent)
-            }
         }
 
 
     fun openCamera(view: View) {
-            if (checkSelfPermission(android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+        when {
+            checkSelfPermission(android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED -> {
                 requestPermissions(arrayOf(android.Manifest.permission.CAMERA), 1)
-            } else {
+            }
+            checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED -> {
+                requestPermissions(arrayOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
+            }
+            else -> {
                 dispatchTakePictureIntent()
-            }
-    }
-
-    private fun dispatchTakePictureIntent() {
-        Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent->
-            takePictureIntent.resolveActivity(packageManager)?.also {
-                photoFile = try {
-                    createImageFile()
-            } catch (e: IOException) {
-                null
-            }
-                photoFile?.also {
-                    val photoURI = FileProvider.getUriForFile(
-                            this,
-                            "com.example.android.fileprovider",
-                            it
-                    )
-                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
-                    startActivityForResult(takePictureIntent, requestPictureCode)
-                }
             }
         }
     }
 
-    private fun createImageFile():File {
-
-        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
-        val storageDir: File? = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-        return File.createTempFile(
-                "JPEG_${timeStamp}_",
-                ".jpg",
-                storageDir)
-                .apply {
-                    currentPhotoPath = absolutePath
-                }
+    private fun dispatchTakePictureIntent() {
+        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        if (takePictureIntent.resolveActivity(packageManager) != null) {
+            val values = ContentValues()
+            values.put(MediaStore.Images.Media.TITLE, "myPicture")
+            values.put(MediaStore.Images.Media.DESCRIPTION, "Taken On "+System.currentTimeMillis())
+            imageUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri)
+            startActivityForResult(takePictureIntent, requestPictureCode)
+        }
     }
 
     fun radioButtonChecked(view: View) {

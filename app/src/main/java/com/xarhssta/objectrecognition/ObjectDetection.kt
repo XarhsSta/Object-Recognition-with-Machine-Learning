@@ -71,7 +71,6 @@ class ObjectDetection(private val callback: ObjectCallback) {
                             Log.d(TAG, "Success")
                             if (labels.isNotEmpty()) {
                                 for (label in labels) {
-
                                     itemRecognition.add(ItemRecognition(trackingId,
                                                 label.text,
                                                 label.confidence,
@@ -104,8 +103,8 @@ class ObjectDetection(private val callback: ObjectCallback) {
     }
 
     private fun paintAround(bitmap: Bitmap, boundingBox: Rect, label: ImageLabel, count: Int): Bitmap {
-        val canvas: Canvas = Canvas(bitmap)
-        val paint: Paint = Paint()
+        val canvas = Canvas(bitmap)
+        val paint = Paint()
         paint.style = Paint.Style.STROKE
         paint.color = colorTable[count]
         paint.strokeCap = Paint.Cap.ROUND
