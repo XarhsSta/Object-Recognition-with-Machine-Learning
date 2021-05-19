@@ -15,10 +15,11 @@ private const val TAG = "ObjectDetection"
 
 class ObjectDetection(private val callback: ObjectCallback) {
 
-    private val colorTable: List<Int> = listOf(Color.GREEN, Color.RED, Color.BLUE, Color.BLACK, Color.YELLOW, Color.CYAN, Color.DKGRAY, Color.LTGRAY)
+    private val colorTable: List<Int> =
+        listOf(Color.GREEN, Color.RED, Color.BLUE, Color.BLACK, Color.YELLOW)
     private val itemRecognition: MutableList<ItemRecognition> = mutableListOf()
 
-    interface ObjectCallback{
+    interface ObjectCallback {
         fun onObjectRecognized(itemList: List<ItemRecognition>, bitmap: Bitmap)
     }
 
@@ -31,14 +32,13 @@ class ObjectDetection(private val callback: ObjectCallback) {
             3 -> "flower dataset"
             else -> ""
         }
-        
+
         // Finding the object
         val objectDetectorOptions = ObjectDetectorOptions.Builder()
             .setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE)
             .enableMultipleObjects()
             .enableClassification()
             .build()
-        Log.d(TAG,"locateObjects starts")
 
         val objectDetector = ObjectDetection.getClient(objectDetectorOptions)
         val inputImage = InputImage.fromBitmap(bitmap, 0)
@@ -50,7 +50,6 @@ class ObjectDetection(private val callback: ObjectCallback) {
                 Log.e(TAG, "Failed to find object ${e.message}")
             }
             .addOnSuccessListener { results ->
-                Log.d(TAG,"Object Detected")
                 for ((count, detectedObject) in results.withIndex()) {
                     val boundingBox = detectedObject.boundingBox
                     val trackingId = detectedObject.trackingId
@@ -68,18 +67,20 @@ class ObjectDetection(private val callback: ObjectCallback) {
                     labeler.process(InputImage.fromBitmap(croppedBitmap, 0))
                         .addOnFailureListener { e -> Log.e(TAG, "FAILED! ${e.message}") }
                         .addOnSuccessListener { labels ->
-                            Log.d(TAG, "Success")
                             if (labels.isNotEmpty()) {
                                 for (label in labels) {
-                                    itemRecognition.add(ItemRecognition(trackingId,
-                                                label.text,
-                                                label.confidence,
-                                                boundingBox,
-                                                colorTable[count]
+                                    itemRecognition.add(
+                                        ItemRecognition(
+                                            trackingId,
+                                            label.text,
+                                            label.confidence,
+                                            boundingBox,
+                                            colorTable[count]
                                         )
                                     )
                                 }
-                               recognizedBitmap = paintAround(recognizedBitmap, boundingBox, labels[0], count)
+                                recognizedBitmap =
+                                    paintAround(recognizedBitmap, boundingBox, labels[0], count)
                             }
                             callback.onObjectRecognized(itemRecognition, recognizedBitmap)
                         }
@@ -88,21 +89,28 @@ class ObjectDetection(private val callback: ObjectCallback) {
     }
 
 
-    private fun cropObject(bitmap: Bitmap, rect: Rect) : Bitmap {
+    private fun cropObject(bitmap: Bitmap, rect: Rect): Bitmap {
         return try {
             val width = rect.right - rect.left
             val height = rect.bottom - rect.top
-            Bitmap.createBitmap(bitmap,
+            Bitmap.createBitmap(
+                bitmap,
                 rect.left,
                 rect.top,
                 width,
-                height)
-        } catch (e:IllegalArgumentException){
+                height
+            )
+        } catch (e: IllegalArgumentException) {
             bitmap
         }
     }
 
-    private fun paintAround(bitmap: Bitmap, boundingBox: Rect, label: ImageLabel, count: Int): Bitmap {
+    private fun paintAround(
+        bitmap: Bitmap,
+        boundingBox: Rect,
+        label: ImageLabel,
+        count: Int
+    ): Bitmap {
         val canvas = Canvas(bitmap)
         val paint = Paint()
         paint.style = Paint.Style.STROKE
@@ -123,7 +131,10 @@ class ObjectDetection(private val callback: ObjectCallback) {
         boxPaint.color = colorTable[count]
         boxPaint.style = Paint.Style.FILL
 
-        val textToShow = label.text.capitalize(Locale.ROOT) + " " + String.format("%.1f", label.confidence * 100.0f) + " %"
+        val textToShow = label.text.capitalize(Locale.ROOT) + " " + String.format(
+            "%.1f",
+            label.confidence * 100.0f
+        ) + " %"
         val textWidth = textPaint.measureText(textToShow)
 
         val rectLeft = boundingBox.left.toFloat()

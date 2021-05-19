@@ -6,11 +6,9 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.ImageView
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
-private const val TAG = "ChosenImage"
 private const val STATE_RECOGNIZE = "Image"
 
 class ChosenImage : BaseActivity() {
@@ -18,7 +16,7 @@ class ChosenImage : BaseActivity() {
     private var data: ByteArray? = null
     private var chosenImageView: ImageView? = null
     private val itemRecognitions: List<ItemRecognition> = EMPTY_ITEM_LIST
-    private val itemRecognitionAdapter = ItemRecognitionAdapter(itemRecognitions, this)
+    private val itemRecognitionAdapter = ItemRecognitionAdapter(itemRecognitions)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,8 +29,7 @@ class ChosenImage : BaseActivity() {
 
         data = if (savedInstanceState == null) {
             intent.getByteArrayExtra("photo")!!
-        }
-        else {
+        } else {
             savedInstanceState.getByteArray(STATE_RECOGNIZE)!!
         }
 
@@ -46,21 +43,21 @@ class ChosenImage : BaseActivity() {
         itemList.adapter = itemRecognitionAdapter
 
         viewModel.recognitionList.observe(this,
-        Observer<List<ItemRecognition>> {
-            itemRecognitionAdapter.setRecognitionList(it ?: EMPTY_ITEM_LIST)
-        })
+            {
+                itemRecognitionAdapter.setRecognitionList(it ?: EMPTY_ITEM_LIST)
+            })
 
         viewModel.recognizedBitmap.observe(this,
-        Observer<Bitmap>{
-            chosenImageView?.setImageBitmap(it)
-        })
-        if(savedInstanceState == null) {
+            {
+                chosenImageView?.setImageBitmap(it)
+            })
+        if (savedInstanceState == null) {
             viewModel.recognizeObjects(convertedBitmap, modelChosen)
         }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.menu_main,menu)
+        menuInflater.inflate(R.menu.menu_main, menu)
         return true
     }
 
@@ -75,11 +72,12 @@ class ChosenImage : BaseActivity() {
     }
 
     private fun convert(bitmap: Bitmap): Bitmap {
-        val convertedBitmap = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+        val convertedBitmap =
+            Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(convertedBitmap)
         val paint = Paint()
         paint.color = Color.BLACK
-        val zero: Float = .0f
+        val zero = .0f
         canvas.drawBitmap(bitmap, zero, zero, paint)
         return convertedBitmap
     }
